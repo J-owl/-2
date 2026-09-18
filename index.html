@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historical Interview System</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background:
+        radial-gradient(circle at center, #17212b 0%, #080b10 55%, #030508 100%);
+    color: #dcecff;
+    font-family: Arial, "Noto Sans KR", sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+button {
+    font-family: inherit;
+}
+
+#startScreen {
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(circle, #172330 0%, #070a0e 65%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.startBox {
+    width: min(90%, 700px);
+    text-align: center;
+    border: 1px solid #42617b;
+    padding: 45px 30px;
+    background: rgba(5, 10, 15, 0.88);
+    box-shadow: 0 0 40px rgba(70, 150, 210, 0.12);
+}
+
+.systemTitle {
+    font-size: clamp(24px, 5vw, 48px);
+    letter-spacing: 5px;
+    margin-bottom: 30px;
+}
+
+.systemSub {
+    color: #7897ad;
+    letter-spacing: 2px;
+    line-height: 2;
+    margin-bottom: 35px;
+}
+
+#startButton {
+    padding: 16px 40px;
+    border: 1px solid #72c9ff;
+    background: rgba(40, 110, 150, 0.18);
+    color: #bfeaff;
+    font-size: 17px;
+    letter-spacing: 2px;
+    cursor: pointer;
+}
+
+#startButton:hover {
+    background: rgba(80, 170, 220, 0.3);
+}
+
+#loading {
+    display: none;
+    line-height: 2;
+}
+
+#app {
+    display: none;
+    height: 100vh;
+    padding: 14px;
+}
+
+.header {
+    height: 70px;
+    border: 1px solid #294052;
+    background: rgba(7, 14, 20, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+}
+
+.headerTitle {
+    font-size: 20px;
+    letter-spacing: 3px;
+}
+
+.status {
+    color: #74d6ff;
+    font-size: 13px;
+}
+
+.main {
+    height: calc(100vh - 98px);
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: 34% 66%;
+    gap: 14px;
+}
+
+.characterPanel,
+.interviewPanel {
+    border: 1px solid #294052;
+    background: rgba(5, 11, 17, 0.88);
+}
+
+.characterPanel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.characterPanel::before,
+.characterPanel::after {
+    content: "";
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border-color: #4a7d9d;
+    border-style: solid;
+}
+
+.characterPanel::before {
+    top: 15px;
+    left: 15px;
+    border-width: 2px 0 0 2px;
+}
+
+.characterPanel::after {
+    right: 15px;
+    bottom: 15px;
+    border-width: 0 2px 2px 0;
+}
+
+.portrait {
+    width: min(70%, 300px);
+    aspect-ratio: 3 / 4;
+    border: 1px solid #52738a;
+    background:
+        linear-gradient(145deg, #263b49, #0b1218);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 0 35px rgba(70, 160, 220, 0.12);
+}
+
+.portraitFace {
+    width: 45%;
+    height: 42%;
+    border-radius: 48% 48% 45% 45%;
+    background: #aeb8bd;
+    position: relative;
+}
+
+.portraitFace::before {
+    content: "";
+    position: absolute;
+    width: 115%;
+    height: 32%;
+    top: -16%;
+    left: -7%;
+    background: #263039;
+    border-radius: 60% 60% 30% 30%;
+}
+
+.portraitFace::after {
+    content: "정 약 용";
+    position: absolute;
+    bottom: -70%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    color: #c9d8df;
+    font-size: 18px;
+    letter-spacing: 5px;
+}
+
+.speaking {
+    animation: speak 0.55s infinite alternate;
+}
+
+@keyframes speak {
+    from {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(90, 190, 240, 0.12);
+    }
+    to {
+        transform: scale(1.015);
+        box-shadow: 0 0 45px rgba(90, 190, 240, 0.3);
+    }
+}
+
+.subjectName {
+    font-size: 24px;
+    letter-spacing: 5px;
+}
+
+.subjectInfo {
+    margin-top: 8px;
+    color: #718b9d;
+    font-size: 13px;
+}
+
+.interviewPanel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.panelHeader {
+    padding: 16px 20px;
+    border-bottom: 1px solid #263b4a;
+    color: #80c8e8;
+    letter-spacing: 2px;
+}
+
+.log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.message {
+    margin-bottom: 18px;
+    line-height: 1.65;
+}
+
+.label {
+    font-size: 12px;
+    color: #648da5;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+}
+
+.question {
+    color: #d9e8f0;
+}
+
+.answer {
+    color: #aee3ff;
+}
+
+.inputArea {
+    border-top: 1px solid #263b4a;
+    padding: 14px;
+}
+
+textarea {
+    width: 100%;
+    height: 75px;
+    resize: none;
+    border: 1px solid #365568;
+    background: #070d12;
+    color: #e3f3fa;
+    padding: 12px;
+    font-size: 15px;
+    outline: none;
+}
+
+textarea:focus {
+    border-color: #69b9df;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.controls button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 10px;
+    border: 1px solid #3c6075;
+    background: #0b151c;
+    color: #bfe7f8;
+    cursor: pointer;
+}
+
+.controls button:hover {
+    background: #142833;
+}
+
+#voiceButton {
+    border-color: #5aa8cc;
+}
+
+#endButton {
+    border-color: #754d59;
+    color: #e7b7c1;
+}
+
+.footerStatus {
+    text-align: center;
+    color: #526d7c;
+    font-size: 11px;
+    margin-top: 8px;
+}
+
+@media (max-width: 800px) {
+    body {
+        overflow: auto;
+    }
+
+    #app {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .main {
+        height: auto;
+        min-height: calc(100vh - 98px);
+        grid-template-columns: 1fr;
+    }
+
+    .characterPanel {
+        min-height: 420px;
+    }
+
+    .interviewPanel {
+        min-height: 500px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- 시작 화면 -->
+<div id="startScreen">
+
+    <div class="startBox">
+
+        <div id="startContent">
+
+            <div class="systemTitle">
+                HISTORICAL INTERVIEW SYSTEM
+            </div>
+
+            <div class="systemSub">
+                STANDBY<br>
+                SUBJECT: JEONG YAG-YONG
+            </div>
+
+            <button id="startButton">
+                START INTERVIEW
+            </button>
+
+        </div>
+
+        <div id="loading">
+            LOADING HISTORICAL SUBJECT...<br>
+            IDENTIFICATION COMPLETE<br>
+            <strong>JEONG YAG-YONG</strong><br>
+            READY
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- 실제 인터뷰 화면 -->
+<div id="app">
+
+    <div class="header">
+
+        <div class="headerTitle">
+            HISTORICAL INTERVIEW SYSTEM
+        </div>
+
+        <div class="status" id="systemStatus">
+            ● SYSTEM READY
+        </div>
+
+    </div>
+
+
+    <div class="main">
+
+        <!-- 정약용 화면 -->
+        <div class="characterPanel">
+
+            <div class="portrait" id="portrait">
+                <div class="portraitFace"></div>
+            </div>
+
+            <div class="subjectName">
+                정 약 용
+            </div>
+
+            <div class="subjectInfo">
+                HISTORICAL SUBJECT
+            </div>
+
+        </div>
+
+
+        <!-- 인터뷰 화면 -->
+        <div class="interviewPanel">
+
+            <div class="panelHeader">
+                INTERVIEW LOG
+            </div>
+
+            <div class="log" id="conversationLog">
+
+                <div class="message">
+
+                    <div class="label">
+                        JEONG YAG-YONG
+                    </div>
+
+                    <div class="answer">
+                        반갑네. 궁금한 것이 있다면 물어보게.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="inputArea">
+
+                <textarea
+                    id="questionInput"
+                    placeholder="정약용에게 질문을 입력하세요."
+                ></textarea>
+
+                <div class="controls">
+
+                    <button id="voiceButton">
+                        🎤 음성 질문
+                    </button>
+
+                    <button id="askButton">
+                        질문하기
+                    </button>
+
+                    <button id="speakButton">
+                        🔊 답변 다시 듣기
+                    </button>
+
+                    <button id="endButton">
+                        인터뷰 종료
+                    </button>
+
+                </div>
+
+                <div class="footerStatus" id="voiceStatus">
+                    VOICE SYSTEM READY
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =====================================================
+   정약용 인터뷰 자료
+   중요:
+   아래 자료에 없는 역사적 사실은 답변하지 않습니다.
+===================================================== */
+
+const historicalData = [
+
+    {
+        keywords: [
+            "목민심서",
+            "목민심서는",
+            "목민심서가",
+            "목민심서의"
+        ],
+        answer:
+        "목민심서는 목민관, 곧 수령의 기본 자세를 다룬 책이네. '목민'이란 백성을 다스린다는 뜻이지. 나는 실제로 목민관으로 재직할 때 목민할 마음은 가졌지만 실천할 수 없었던 현실을 담아내어 이 책을 지었다고 밝혔네."
+    },
+
+    {
+        keywords: [
+            "흠흠신서",
+            "흠흠신서는",
+            "흠흠신서가",
+            "흠흠신서의"
+        ],
+        answer:
+        "흠흠신서는 형사사건의 조사, 심리, 처형 과정을 다루는 관리들을 계몽하기 위해 집필한 책이네. 당시 살인 사건의 조사와 심리, 처형 과정이 매우 형식적이고 무성의하게 진행되는 것에 관심을 가지게 되었고, 이를 바로잡고 계몽할 필요성을 느껴 집필에 착수했네."
+    },
+
+    {
+        keywords: [
+            "왜 썼",
+            "쓴 이유",
+            "집필 이유",
+            "집필한 이유",
+            "흠흠신서를 왜"
+        ],
+        answer:
+        "살인 사건의 조사와 심리, 처형 과정이 매우 형식적이고 무성의하게 진행되는 것을 보며 생명존중 사상이 무너져가는 것을 개탄하였네. 이를 바로잡고 계몽할 필요성을 느껴 흠흠신서의 집필에 착수했지."
+    },
+
+    {
+        keywords: [
+            "비상전초",
+            "비상전초는",
+            "비상전초가"
+        ],
+        answer:
+        "비상전초에는 살인 사건의 문서를 작성하는 수령과 관찰사에게 모범을 제시하기 위해 청나라에서 발생한 비슷한 사건의 표본을 선별하여 해설과 함께 비평한 내용이 담겨 있네. 살인사건 문서의 이상적인 형식과 문장 기법, 사실인정 기술과 관계 법례를 참고할 수 있도록 논술한 것이지."
+    },
+
+    {
+        keywords: [
+            "의율차례",
+            "의율차례는",
+            "의율차례가"
+        ],
+        answer:
+        "의율차례에는 당시 살인 사건의 유형과 그에 적용되는 법규 및 형량이 세분되지 않아 죄의 경중이 무시되고 있던 사실에 착안하여 중국의 모범적인 판례를 체계적으로 분류하고 제시하여 참고하도록 한 내용이 담겨 있네."
+    },
+
+    {
+        keywords: [
+            "흠흠",
+            "뜻",
+            "의미",
+            "제목"
+        ],
+        answer:
+        "흠흠이란 '매사에 삼가고 또 삼갈 일이다'라는 의미이네. 나는 재판을 정밀하고 자세하며 침착하고 무게 있게 처리해야 한다는 점을 강조하고자 책의 제목을 흠흠신서라고 지었네."
+    }
+
+];
+
+
+/* =====================================================
+   HTML 요소 가져오기
+===================================================== */
+
+const startScreen = document.getElementById("startScreen");
+const startContent = document.getElementById("startContent");
+const loading = document.getElementById("loading");
+
+const app = document.getElementById("app");
+
+const startButton = document.getElementById("startButton");
+
+const questionInput = document.getElementById("questionInput");
+const askButton = document.getElementById("askButton");
+const voiceButton = document.getElementById("voiceButton");
+const speakButton = document.getElementById("speakButton");
+const endButton = document.getElementById("endButton");
+
+const conversationLog = document.getElementById("conversationLog");
+
+const systemStatus = document.getElementById("systemStatus");
+const voiceStatus = document.getElementById("voiceStatus");
+
+const portrait = document.getElementById("portrait");
+
+
+/* =====================================================
+   마지막 답변 저장
+===================================================== */
+
+let lastAnswer =
+    "반갑네. 궁금한 것이 있다면 물어보게.";
+
+
+/* =====================================================
+   인터뷰 시작
+===================================================== */
+
+startButton.addEventListener("click", function() {
+
+    startContent.style.display = "none";
+    loading.style.display = "block";
+
+    setTimeout(function() {
+
+        startScreen.style.display = "none";
+        app.style.display = "block";
+
+        systemStatus.textContent = "● INTERVIEW ACTIVE";
+
+        speak(lastAnswer);
+
+    }, 1500);
+
+});
+
+
+/* =====================================================
+   질문에서 답변 찾기
+===================================================== */
+
+function findAnswer(question) {
+
+    const text = question
+        .toLowerCase()
+        .replace(/\s+/g, "");
+
+    let bestAnswer = null;
+    let bestScore = 0;
+
+    for (const item of historicalData) {
+
+        let score = 0;
+
+        for (const keyword of item.keywords) {
+
+            const cleanKeyword =
+                keyword.toLowerCase().replace(/\s+/g, "");
+
+            if (text.includes(cleanKeyword)) {
+                score++;
+            }
+
+        }
+
+        if (score > bestScore) {
+
+            bestScore = score;
+            bestAnswer = item.answer;
+
+        }
+
+    }
+
+    if (bestAnswer) {
+        return bestAnswer;
+    }
+
+    return "그 부분에 대해서는 내가 아는 바가 없네. 이 인터뷰에 입력된 자료 안에서는 확인할 수 없는 내용이네.";
+}
+
+
+/* =====================================================
+   대화 기록에 질문과 답변 추가
+===================================================== */
+
+function addMessage(question, answer) {
+
+    const questionBox = document.createElement("div");
+
+    questionBox.className = "message";
+
+    questionBox.innerHTML =
+        '<div class="label">INTERVIEWER</div>' +
+        '<div class="question">' +
+        escapeHTML(question) +
+        '</div>';
+
+    conversationLog.appendChild(questionBox);
+
+
+    const answerBox = document.createElement("div");
+
+    answerBox.className = "message";
+
+    answerBox.innerHTML =
+        '<div class="label">JEONG YAG-YONG</div>' +
+        '<div class="answer">' +
+        escapeHTML(answer) +
+        '</div>';
+
+    conversationLog.appendChild(answerBox);
+
+
+    conversationLog.scrollTop =
+        conversationLog.scrollHeight;
+
+}
+
+
+/* =====================================================
+   HTML 특수문자 방지
+===================================================== */
+
+function escapeHTML(text) {
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+
+}
+
+
+/* =====================================================
+   질문 처리
+===================================================== */
+
+function askQuestion() {
+
+    const question =
+        questionInput.value.trim();
+
+    if (!question) {
+
+        voiceStatus.textContent =
+            "질문을 먼저 입력해주세요.";
+
+        return;
+
+    }
+
+
+    systemStatus.textContent =
+        "● PROCESSING QUESTION";
+
+    const answer =
+        findAnswer(question);
+
+    lastAnswer = answer;
+
+
+    addMessage(question, answer);
+
+
+    questionInput.value = "";
+
+
+    setTimeout(function() {
+
+        systemStatus.textContent =
+            "● JEONG YAG-YONG SPEAKING";
+
+        speak(answer);
+
+    }, 300);
+
+}
+
+
+askButton.addEventListener(
+    "click",
+    askQuestion
+);
+
+
+/* =====================================================
+   Enter 키로 질문하기
+===================================================== */
+
+questionInput.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+
+            event.preventDefault();
+
+            askQuestion();
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   음성 출력
+===================================================== */
+
+function speak(text) {
+
+    if (!("speechSynthesis" in window)) {
+
+        voiceStatus.textContent =
+            "이 브라우저에서는 음성 출력을 지원하지 않습니다.";
+
+        return;
+
+    }
+
+
+    window.speechSynthesis.cancel();
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(text);
+
+    utterance.lang = "ko-KR";
+
+    utterance.rate = 0.9;
+
+    utterance.pitch = 0.8;
+
+
+    utterance.onstart = function() {
+
+        portrait.classList.add("speaking");
+
+        systemStatus.textContent =
+            "● VOICE OUTPUT ACTIVE";
+
+    };
+
+
+    utterance.onend = function() {
+
+        portrait.classList.remove("speaking");
+
+        systemStatus.textContent =
+            "● INTERVIEW ACTIVE";
+
+    };
+
+
+    window.speechSynthesis.speak(
+        utterance
+    );
+
+}
+
+
+/* =====================================================
+   답변 다시 듣기
+===================================================== */
+
+speakButton.addEventListener(
+    "click",
+    function() {
+
+        speak(lastAnswer);
+
+    }
+);
+
+
+/* =====================================================
+   음성 인식
+===================================================== */
+
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+let recognition = null;
+
+
+if (SpeechRecognition) {
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.lang = "ko-KR";
+
+    recognition.continuous = false;
+
+    recognition.interimResults = false;
+
+
+    recognition.onstart = function() {
+
+        voiceStatus.textContent =
+            "🎤 듣고 있습니다... 질문해주세요.";
+
+        systemStatus.textContent =
+            "● VOICE RECOGNITION ACTIVE";
+
+        voiceButton.textContent =
+            "🎤 듣는 중...";
+
+    };
+
+
+    recognition.onresult =
+        function(event) {
+
+            const result =
+                event.results[0][0].transcript;
+
+            questionInput.value = result;
+
+            voiceStatus.textContent =
+                "음성이 인식되었습니다.";
+
+            voiceButton.textContent =
+                "🎤 음성 질문";
+
+
+            setTimeout(
+                askQuestion,
+                300
+            );
+
+        };
+
+
+    recognition.onerror =
+        function(event) {
+
+            voiceStatus.textContent =
+                "음성 인식에 문제가 생겼습니다. 직접 입력해도 됩니다.";
+
+            voiceButton.textContent =
+                "🎤 음성 질문";
+
+            systemStatus.textContent =
+                "● INTERVIEW ACTIVE";
+
+        };
+
+
+    recognition.onend =
+        function() {
+
+            voiceButton.textContent =
+                "🎤 음성 질문";
+
+        };
+
+
+} else {
+
+    voiceButton.disabled = true;
+
+    voiceButton.textContent =
+        "🎤 음성 인식 미지원";
+
+    voiceStatus.textContent =
+        "현재 브라우저에서 음성 인식을 지원하지 않습니다.";
+
+}
+
+
+/* =====================================================
+   음성 질문 버튼
+===================================================== */
+
+voiceButton.addEventListener(
+    "click",
+    function() {
+
+        if (!recognition) {
+
+            questionInput.focus();
+
+            return;
+
+        }
+
+        try {
+
+            recognition.start();
+
+        } catch (error) {
+
+            voiceStatus.textContent =
+                "음성 인식을 다시 시도해주세요.";
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   인터뷰 종료
+===================================================== */
+
+endButton.addEventListener(
+    "click",
+    function() {
+
+        if (
+            !confirm(
+                "인터뷰를 종료하시겠습니까?"
+            )
+        ) {
+            return;
+        }
+
+
+        if (recognition) {
+
+            try {
+                recognition.stop();
+            } catch (error) {}
+
+        }
+
+
+        window.speechSynthesis.cancel();
+
+
+        app.style.display = "none";
+
+        startScreen.style.display =
+            "flex";
+
+        startContent.style.display =
+            "block";
+
+        loading.style.display =
+            "none";
+
+
+        systemStatus.textContent =
+            "● SYSTEM READY";
+
+    }
+);
+
+</script>
+
+</body>
+</html>
